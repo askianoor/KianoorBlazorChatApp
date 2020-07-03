@@ -19,6 +19,7 @@ namespace KianoorBlazorApp.Server.Controllers
         [HttpGet("_configuration/{clientId}")]
         public IActionResult GetClientRequestParameters([FromRoute]string clientId)
         {
+            _logger.LogInformation(clientId);
             var parameters = ClientRequestParametersProvider.GetClientParameters(HttpContext, clientId);
             return Ok(parameters);
         }

@@ -10,6 +10,15 @@
     <link href="css/app.css" rel="stylesheet" />
     <link href="manifest.json" rel="manifest" />
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+
+    <link href="quill/quill.core.min.css" rel="stylesheet" />
+    <link href="quill/quill.snow.min.css" rel="stylesheet" />
+    <link href="quill/quill.bubble.min.css" rel="stylesheet" />
+
+    <link href="lib/font-awesome/css/fontawesome.min.css" rel="stylesheet" />
+    <link href="lib/emoji-picker/css/emoji.css" rel="stylesheet" />
+    <link href="lib/animate.css/animate.min.css" rel="stylesheet" />
+
 </head>
 
 <body>
@@ -20,6 +29,28 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+    <script src="lib/jquery/jquery.js"></script>
+    <script src="lib/font-awesome/js/all.min.js"></script>
+
+    <script src="quill/quill.min.js"></script>
+    <script src="quill/BlazorQuill.js"></script>
+
+    <script src="lib/emoji-picker/js/config.js"></script>
+    <script src="lib/emoji-picker/js/util.js"></script>
+    <script src="lib/emoji-picker/js/jquery.emojiarea.js"></script>
+    <script src="lib/emoji-picker/js/emoji-picker.js"></script>
+
+    <script src="BlazorInputFile/inputfile.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $(".ql-editor").emojiArea({
+                pickerPosition: "left",
+                tonesStyle: "bullet"
+            });
+        })
+    </script>
+
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
     <script>navigator.serviceWorker.register('service-worker.js');</script>

@@ -13,6 +13,10 @@ using Microsoft.Extensions.Hosting;
 using System.Linq;
 using KianoorBlazorApp.Server.Data;
 using KianoorBlazorApp.Server.Models;
+using EmojiPicker;
+using KianoorBlazorApp.Client.Pages;
+using KianoorBlazorApp.Services;
+using KianoorBlazorApp.Shared.Services;
 
 namespace KianoorBlazorApp.Server
 {
@@ -46,11 +50,20 @@ namespace KianoorBlazorApp.Server
             services.AddRazorPages();
 
             services.AddSignalR();
+            services.AddResponseCompression(opts =>
+            {
+                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                    new[] { "application/octet-stream" });
+            });
+            services.AddScoped<IChatService, ChatService>();
+            services.AddEmojiPicker(); // For EmojiPicker
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseResponseCompression();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -79,6 +92,7 @@ namespace KianoorBlazorApp.Server
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
                 endpoints.MapHub<Hubs.ChatHub>(Shared.Chat.ChatClient.HUBURL);
+                endpoints.MapHub<Hubs.PremiumChatHub>(ChatService.HUBURL);
                 endpoints.MapFallbackToFile("index.html");
             });
         }

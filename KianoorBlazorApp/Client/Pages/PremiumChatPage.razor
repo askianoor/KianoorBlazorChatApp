@@ -1,0 +1,316 @@
+﻿@page "/PremiumChat"
+
+@using KianoorBlazorApp.Shared
+@using KianoorBlazorApp.Shared.Services
+@using System.Text.Json;
+@using Microsoft.AspNetCore.SignalR.Client
+@using KianoorBlazorApp
+@using KianoorBlazorApp.Domain
+@using Blazor.FileReader
+@using System.IO;
+
+@inject HttpClient client
+@inject IJSRuntime JSRuntime
+@inject IFileReaderService fileReaderService
+@inject NavigationManager NavigationManager
+@inject IChatService ChatService
+
+
+<div class="card" style="margin:15px;">
+    <div class="card-header">
+        <h5>Live-Chat</h5>
+        <h6 class="card-subtitle mb-2 text-muted">
+            <AuthorizeView>
+                <Authorized>You are logged in</Authorized>
+                <NotAuthorized>Log in to access all features</NotAuthorized>
+            </AuthorizeView>
+        </h6>
+    </div>
+
+    <ul id="messagesList" class="list-group list-group-flush">
+        @foreach (var UserMessage in ChatService.AllMessages)
+        {
+            <li class="list-group-item" style="@(UserMessage.User.Equals(ChatSystemMsg.SystemUser) ? "color: #ccc;font-style:italic;font-weight:bold;" : "")">
+                <strong>@UserMessage.User.EMail</strong> <sup>@UserMessage.GetTimeDifference()</sup>
+                @if (UserMessage.User.IsGuest)
+                {
+                    <span class="badge badge-pill badge-dark">Guest</span>
+                }
+                <div style="font-size:small;">
+                    @foreach (var Submsg in UserMessage.Messages)
+                    {
+                        <div class="animate__animated animate__lightSpeedInRight">@((MarkupString)Submsg)</div>
+                    }
+                </div>
+            </li>
+        }
+    </ul>
+    <div class="card-body">
+        <EditForm Model="@ChatService.ChatForm" Context="formContext" OnSubmit="SendMessage">
+            <DataAnnotationsValidator />
+            <AuthorizeView>
+                <NotAuthorized>
+                    <div class="input-group mb-3 @(ChatService.HasSentMsg ? "animate__animated animate__fadeOutRight":"")">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="addon-mail">&#x00040;</span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="E-Mail" aria-label="E-Mail" aria-describedby="addon-inputmail" @bind-value="ChatService.ChatForm.CurrentUser.EMail" />
+                    </div>
+                    <ValidationMessage For="@(() => ChatService.ChatForm.CurrentUser.EMail)" />
+                </NotAuthorized>
+            </AuthorizeView>
+
+            <small style="font-style:italic;font-weight: bold;">Markdown and Html are supported :-) For more features please login to your account.</small>
+
+
+            @if (EditorEnabled)
+            {
+                <div id="toolbar">
+                    <select class="ql-header">
+                        <option selected=""></option>
+                        <option value="1"></option>
+                        <option value="2"></option>
+                        <option value="3"></option>
+                        <option value="4"></option>
+                        <option value="5"></option>
+                    </select>
+                    <span class="ql-formats">
+                        <button class="ql-bold"></button>
+                        <button class="ql-italic"></button>
+                        <button class="ql-underline"></button>
+                        <button class="ql-strike"></button>
+                    </span>
+                    <span class="ql-formats">
+                        <select class="ql-color"></select>
+                        <select class="ql-background"></select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-list" value="ordered"></button>
+                        <button class="ql-list" value="bullet"></button>
+                        <button class="ql-indent" value="-1"></button>
+                        <button class="ql-indent" value="+1"></button>
+                        <select class="ql-align">
+                            <option selected=""></option>
+                            <option value="center"></option>
+                            <option value="right"></option>
+                            <option value="justify"></option>
+                        </select>
+                    </span>
+                    <span class="ql-formats">
+                        <button class="ql-link"></button>
+                    </span>
+                </div>
+            }
+
+            <div @ref="@divEditorElement" id="divEditorElement" data-emojiable="true">
+                @EditorContent
+            </div>
+
+
+            <div>
+                @if (ChatService.IsConnected() && !String.IsNullOrWhiteSpace(ChatService.ChatForm.CurrentUser.EMail))
+                {
+                    <button type="submit" class="btn btn-success">Send <i class="fas fa-share"></i></button>
+                    <button type="button" @onclick="toggleToolbar" class="btn btn-info">
+
+                        @if (EditorEnabled)
+                        {
+                            <i class="fa fa-toggle-off"></i>
+                        }
+                        else
+                        {
+                            <i class="fa fa-toggle-on"></i>
+                        }
+                    </button>
+
+                }
+                else
+                {
+                    <button type="button" class="btn btn-secondary">Send</button>
+                }
+
+                <AuthorizeView>
+                    <div class="drag-drop-zone">
+                        <InputFile OnChange="HandleFileSelected" />
+                        @status
+                    </div>
+
+                    <InputFile multiple OnChange="HandleFileSelected" />
+                </AuthorizeView>
+
+            </div>
+
+            <ValidationMessage For="@(() => ChatService.ChatForm.MessageInput)" />
+        </EditForm>
+
+
+    </div>
+</div>
+
+
+@code  {
+
+    #region Variables
+
+    [CascadingParameter] Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    const string DefaultStatus = "Drop a file here to send it, or click to choose a file";
+    string status = DefaultStatus;
+
+    #endregion
+
+    #region Insitializing Functions
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeAsync<string>("QuillFunctions.createQuill", divEditorElement);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ChatService.HubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/PremiumChatHub"))
+            .Build();
+
+
+        ChatService.HubConnection.On<string, MsgPriority>(IPublic.SYSTEM_MSG, (message, priority) =>
+        {
+            var lastMessage = ChatService.AllMessages.LastOrDefault();
+            if (lastMessage != null && lastMessage.User.Equals(ChatSystemMsg.SystemUser))
+            {
+                lastMessage.Messages.Add(message);
+            }
+            else
+            {
+                ChatService.AllMessages.Add(new ChatSystemMsg(new List<string> { message }, priority));
+            }
+        });
+
+        ChatService.HubConnection.On<string, string>(IPublic.RECEIVE_MSG, (user, message) =>
+        {
+            var chatUser = JsonSerializer.Deserialize<ChatUser>(user);
+            var lastMessage = ChatService.AllMessages.LastOrDefault();
+            if (lastMessage != null && lastMessage.User.Equals(chatUser))
+            {
+            // If last message has been written by the same user, add it to the last chatMsg-obj
+            lastMessage.Messages.Add(message);
+            }
+            else
+            {
+            // other user typed msg
+            ChatService.AllMessages.Add(new ChatMsg(chatUser, new List<string> { message }));
+            }
+
+            StateHasChanged();
+        });
+
+        await ChatService.HubConnection.StartAsync();
+        await SetUsernameIfLoggedIn();
+        await ChatService.Join(); // notify other chat members about new chatter
+    }
+
+    public async Task SetUsernameIfLoggedIn()
+    {
+        var authState = await AuthenticationStateTask;
+        var user = authState.User;
+        if (user.Identity.IsAuthenticated)
+        {
+            ChatService.ChatForm.CurrentUser.EMail = user.Identity.Name;
+        }
+        ChatService.ChatForm.CurrentUser.IsGuest = !user.Identity.IsAuthenticated;
+    }
+
+    #endregion
+
+    #region Send Message & Add To Messages
+
+    private async Task SendMessage()
+    {
+        var EditorHtmlContext = await JSRuntime.InvokeAsync<string>("QuillFunctions.getQuillHTML", "divEditorElement");
+
+        ChatService.ChatForm.MessageInput += EditorHtmlContext;
+
+        if (String.IsNullOrWhiteSpace(ChatService.ChatForm.MessageInput))
+        {
+            return;
+        }
+
+        EditorContent = String.Empty;
+
+        await ChatService.Send();
+        await ClearQuill();
+    }
+
+    private void AddToMsg(string msg) => ChatService.ChatForm.MessageInput += msg;
+
+    #endregion
+
+    #region File Handlers Functions
+
+    public void AddFiles(List<string> imgUris)
+    {
+        foreach (string imgUri in imgUris) AddToMsg($"<img src='{imgUri}' alt='Image' class='resizedImg' />");
+
+        ChatService.Send();
+        StateHasChanged();
+    }
+
+    private async Task HandleFileSelected(IFileListEntry[] files)
+    {
+        List<string> imgUris = new List<string>();
+
+        //List<>
+
+        foreach (var file in files)
+        {
+
+            MemoryStream memoryStream = new MemoryStream();
+            await file.Data.CopyToAsync(memoryStream);
+
+            var content = new MultipartFormDataContent { { new ByteArrayContent(memoryStream.GetBuffer()), "\"upload\"", file.Name } };
+
+            var response = await client.PostAsync("Upload", content);
+            if (response.IsSuccessStatusCode)
+            {
+                imgUris = JsonSerializer.Deserialize<List<string>>(await response.Content.ReadAsStringAsync());
+                Console.WriteLine("FileAddress" + imgUris.First());
+            }
+
+            if (imgUris.Count > 0) AddFiles(imgUris);
+        }
+    }
+
+    #endregion
+
+    #region Quill Section
+
+    private string strSavedContent = "";
+    private ElementReference divEditorElement;
+    private string EditorContent;
+    private string EditorHTMLContent;
+    private bool EditorEnabled = true;
+
+    async Task ClearQuill()
+    {
+        await JSRuntime.InvokeAsync<object>("QuillFunctions.ClearQuillContent", "divEditorElement");
+    }
+
+    async Task DisableQuillEditor()
+    {
+        //EditorEnabled = false;
+        await JSRuntime.InvokeAsync<object>(
+            "QuillFunctions.disableQuillEditor", divEditorElement);
+    }
+
+    private void toggleToolbar()
+    {
+        DisableQuillEditor();
+        //EditorEnabled = !EditorEnabled;
+    }
+
+    #endregion
+
+}
