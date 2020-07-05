@@ -7,10 +7,6 @@
       "destination": "wwwroot/quill/"
     },
     {
-      "library": "emoji-picker@1.1.5",
-      "destination": "wwwroot/lib/emoji-picker/"
-    },
-    {
       "library": "jquery@3.5.1",
       "destination": "wwwroot/lib/jquery/"
     },

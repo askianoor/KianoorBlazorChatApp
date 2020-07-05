@@ -72,6 +72,9 @@
 </div>
 
 @code  {
+
+    #region Variables
+
     // flag to indicate chat status
     bool chatting = false;
 
@@ -89,6 +92,9 @@
     // list of messages in chat
     List<Message> messages = new List<Message>();
 
+    #endregion
+
+    #region Chat Funtions
     /// <summary>
     /// Start chat client
     /// </summary>
@@ -169,6 +175,10 @@
         }
     }
 
+    #endregion
+
+    #region Class Models
+
     class Message
     {
         public Message(string username, string body, bool mine)
@@ -193,5 +203,7 @@
             }
         }
     }
+
+    #endregion
 
 }
