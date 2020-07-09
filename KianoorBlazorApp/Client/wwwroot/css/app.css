@@ -293,3 +293,8 @@ textarea {
         opacity: 0;
         cursor: pointer;
     }
+
+.disabledbutton {
+    pointer-events: none;
+    opacity: 0.4;
+}

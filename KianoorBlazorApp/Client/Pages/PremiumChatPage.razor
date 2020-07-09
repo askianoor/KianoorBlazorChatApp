@@ -6,12 +6,10 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using KianoorBlazorApp
 @using KianoorBlazorApp.Domain
-@using Blazor.FileReader
 @using System.IO;
 
 @inject HttpClient client
 @inject IJSRuntime JSRuntime
-@inject IFileReaderService fileReaderService
 @inject NavigationManager NavigationManager
 @inject IChatService ChatService
 
@@ -61,63 +59,60 @@
                 </NotAuthorized>
             </AuthorizeView>
 
-            <small style="font-style:italic;font-weight: bold;">Markdown and Html are supported :-) For more features please login to your account.</small>
+            <small style="font-style:italic;font-weight: bold;">
+                Markdown and Html are supported :-)  <AuthorizeView><NotAuthorized> For more features please login to your account.</NotAuthorized></AuthorizeView>
+            </small>
 
-
-            @if (EditorEnabled)
-            {
-        <div id="toolbar">
-            <select class="ql-header">
-                <option selected=""></option>
-                <option value="1"></option>
-                <option value="2"></option>
-                <option value="3"></option>
-                <option value="4"></option>
-                <option value="5"></option>
-            </select>
-            <span class="ql-formats">
-                <button class="ql-bold"></button>
-                <button class="ql-italic"></button>
-                <button class="ql-underline"></button>
-                <button class="ql-strike"></button>
-            </span>
-            <span class="ql-formats">
-                <select class="ql-color"></select>
-                <select class="ql-background"></select>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-script" value="sub"></button>
-                <button class="ql-script" value="super"></button>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-header" value="1"></button>
-                <button class="ql-header" value="2"></button>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-list" value="ordered"></button>
-                <button class="ql-list" value="bullet"></button>
-                <button class="ql-indent" value="-1"></button>
-                <button class="ql-indent" value="+1"></button>
-                <select class="ql-align">
+            <div id="toolbar">
+                <select class="ql-header">
                     <option selected=""></option>
-                    <option value="center"></option>
-                    <option value="right"></option>
-                    <option value="justify"></option>
+                    <option value="1"></option>
+                    <option value="2"></option>
+                    <option value="3"></option>
+                    <option value="4"></option>
+                    <option value="5"></option>
                 </select>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-clean"></button>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-emoji"></button>
-            </span>
-            <span class="ql-formats">
-                <button class="ql-link"></button>
-                @*<button class="ql-formula"></button>*@
-            </span>
+                <span class="ql-formats">
+                    <button class="ql-bold"></button>
+                    <button class="ql-italic"></button>
+                    <button class="ql-underline"></button>
+                    <button class="ql-strike"></button>
+                </span>
+                <span class="ql-formats">
+                    <select class="ql-color"></select>
+                    <select class="ql-background"></select>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-script" value="sub"></button>
+                    <button class="ql-script" value="super"></button>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-header" value="1"></button>
+                    <button class="ql-header" value="2"></button>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-list" value="ordered"></button>
+                    <button class="ql-list" value="bullet"></button>
+                    <button class="ql-indent" value="-1"></button>
+                    <button class="ql-indent" value="+1"></button>
+                    <select class="ql-align">
+                        <option selected=""></option>
+                        <option value="center"></option>
+                        <option value="right"></option>
+                        <option value="justify"></option>
+                    </select>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-clean"></button>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-emoji"></button>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-link"></button>
+                </span>
 
-        </div>
-            }
+            </div>
 
             <div @ref="@divEditorElement" id="divEditorElement" data-emojiable="true">
                 @EditorContent
@@ -128,18 +123,6 @@
                 @if (ChatService.IsConnected() && !String.IsNullOrWhiteSpace(ChatService.ChatForm.CurrentUser.EMail))
                 {
                     <button type="submit" class="btn btn-success">Send <i class="fas fa-share"></i></button>
-                    <button type="button" @onclick="toggleToolbar" class="btn btn-info">
-
-                        @if (EditorEnabled)
-                        {
-                            <i class="fa fa-toggle-off"></i>
-                        }
-                        else
-                        {
-                            <i class="fa fa-toggle-on"></i>
-                        }
-                    </button>
-
                 }
                 else
                 {
@@ -148,7 +131,7 @@
 
                 <AuthorizeView>
                     <div class="drag-drop-zone">
-                        <InputFile OnChange="HandleFileSelected" />
+                        <InputFile multiple OnChange="HandleFileSelected" />
                         @status
                     </div>
 
@@ -279,8 +262,6 @@
     {
         List<string> imgUris = new List<string>();
 
-        //List<>
-
         foreach (var file in files)
         {
 
@@ -313,19 +294,6 @@
     async Task ClearQuill()
     {
         await JSRuntime.InvokeAsync<object>("QuillFunctions.ClearQuillContent", "divEditorElement");
-    }
-
-    async Task DisableQuillEditor()
-    {
-        //EditorEnabled = false;
-        await JSRuntime.InvokeAsync<object>(
-            "QuillFunctions.disableQuillEditor", divEditorElement);
-    }
-
-    private void toggleToolbar()
-    {
-        DisableQuillEditor();
-        //EditorEnabled = !EditorEnabled;
     }
 
     #endregion

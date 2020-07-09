@@ -9,7 +9,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using KianoorBlazorApp.Shared.Services;
-using Blazor.FileReader;
 
 namespace KianoorBlazorApp.Client
 {
@@ -28,7 +27,6 @@ namespace KianoorBlazorApp.Client
 
             builder.Services.AddApiAuthorization();
             builder.Services.AddScoped<IChatService, ChatService>();
-            builder.Services.AddFileReaderService(options => options.UseWasmSharedBuffer = true);
 
             await builder.Build().RunAsync();
         }

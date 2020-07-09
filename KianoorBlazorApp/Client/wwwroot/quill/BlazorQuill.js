@@ -82,7 +82,7 @@
             return quillControl.__quill.setContents(content, 'api');
         },
         disableQuillEditor: function (quillControl) {
-            document.getElementById(quillControl).__quill.enable(false);
+            document.getElementById(quillControl).editor.enable(false);
         },
         enableQuillEditor: function (quillControl) {
             var elements = document.getElementById(quillControl);
