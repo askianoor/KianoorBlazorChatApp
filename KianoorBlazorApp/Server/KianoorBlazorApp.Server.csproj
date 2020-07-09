@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <Folder Include="Services\" />
+    <Folder Include="wwwroot\upload\uploaded_imgs\" />
   </ItemGroup>
 
 </Project>
