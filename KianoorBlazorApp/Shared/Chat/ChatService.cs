@@ -1,10 +1,7 @@
 ﻿//using Microsoft.AspNetCore.Components;
 //using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.SignalR.Client;
-using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using KianoorBlazorApp.Domain;
@@ -12,7 +9,7 @@ using KianoorBlazorApp.Domain.ChatElements;
 
 namespace KianoorBlazorApp.Shared.Services
 {
-    
+
     public interface IChatService
     {
         public ChatForm ChatForm { get; set; }

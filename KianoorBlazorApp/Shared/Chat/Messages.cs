@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace KianoorBlazorApp.Shared.Chat
+﻿namespace KianoorBlazorApp.Shared.Chat
 {
     public static class Messages
     {

@@ -1,9 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
@@ -14,8 +10,6 @@ using System.Linq;
 using KianoorBlazorApp.Server.Data;
 using KianoorBlazorApp.Server.Models;
 using EmojiPicker;
-using KianoorBlazorApp.Client.Pages;
-using KianoorBlazorApp.Services;
 using KianoorBlazorApp.Shared.Services;
 
 namespace KianoorBlazorApp.Server
